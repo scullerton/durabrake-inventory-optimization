@@ -1,0 +1,8 @@
+# Data files (user-uploaded, not for version control)
+data/*.csv
+data/*.xlsx
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
