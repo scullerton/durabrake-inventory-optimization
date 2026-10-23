@@ -84,11 +84,239 @@ dead = pd.read_csv(os.path.join(base_dir, 'analysis/dead_stock_final.csv'))
 wb = Workbook()
 
 # ============================================================================
-# SHEET 1: EXECUTIVE SUMMARY
+# SHEET 1: HOW TO USE (Plain English Explainer)
 # ============================================================================
 
 ws = wb.active
-ws.title = "Executive Summary"
+ws.title = "How to Use"
+
+ws['A1'] = "DuraBrake Inventory Analysis - Quick Guide"
+ws['A1'].font = Font(bold=True, size=16, color="1F4E79")
+ws.merge_cells('A1:D1')
+
+row = 3
+ws[f'A{row}'] = "WHAT THIS WORKBOOK TELLS YOU"
+ws[f'A{row}'].font = SECTION_FONT
+ws[f'A{row}'].fill = SECTION_FILL
+ws.merge_cells(f'A{row}:D{row}')
+
+explainer_text = [
+    ("The Problem:", "We have money tied up in inventory that isn't selling, or is sitting in the wrong warehouse."),
+    ("", "This analysis identifies which parts need attention and recommends what to do with them."),
+    ("", ""),
+    ("How We Figured This Out:", "We looked at every part at every warehouse and asked:"),
+    ("", "  • Is it selling? (Last 12 months of sales data)"),
+    ("", "  • Is it profitable when it does sell? (Gross margin)"),
+    ("", "  • How fast does it turn over? (Inventory turns)"),
+    ("", "  • Do we have customer orders waiting? (Backlog)"),
+    ("", ""),
+    ("The Key Metric - EVS:", "EVS stands for 'Economic Value per Stocked Dollar'"),
+    ("", "It answers: 'For every dollar we have tied up in this part, are we making or losing money?'"),
+    ("", "  • Positive EVS = Making money (good)"),
+    ("", "  • Negative EVS = Losing money (bad - the cost of holding it exceeds the profit)"),
+    ("", "  • Below -25% EVS with no sales = Candidate for scrap"),
+]
+
+for label, text in explainer_text:
+    row += 1
+    ws[f'A{row}'] = label
+    ws[f'A{row}'].font = Font(bold=True) if label else NORMAL_FONT
+    ws[f'B{row}'] = text
+    ws[f'B{row}'].alignment = WRAP_ALIGN
+    ws.merge_cells(f'B{row}:D{row}')
+
+row += 2
+ws[f'A{row}'] = "WHAT EACH TAB SHOWS"
+ws[f'A{row}'].font = SECTION_FONT
+ws[f'A{row}'].fill = SECTION_FILL
+ws.merge_cells(f'A{row}:D{row}')
+
+tab_descriptions = [
+    ("Action Items", "START HERE - Parts that need decisions, sorted by priority. This is your to-do list."),
+    ("Executive Summary", "High-level numbers: total inventory, how much is excess, breakdown by category."),
+    ("Methodology", "Technical details for those who want to understand the formulas."),
+    ("Full Disposition", "Complete list of all 317 SKU×DC combinations with all the data. You can filter/sort."),
+    ("Stranded - Transfer Eval", "Parts with zero sales at their current warehouse but sales elsewhere in the network. Consider moving these instead of scrapping."),
+    ("Dead Stock - Scrap", "Parts with zero sales everywhere. These are scrap candidates."),
+]
+
+row += 1
+ws[f'A{row}'] = "Tab Name"
+ws[f'B{row}'] = "What It Contains"
+ws[f'A{row}'].font = Font(bold=True)
+ws[f'B{row}'].font = Font(bold=True)
+for col in ['A', 'B']:
+    ws[f'{col}{row}'].fill = HEADER_FILL
+    ws[f'{col}{row}'].font = HEADER_FONT
+    ws[f'{col}{row}'].border = THIN_BORDER
+
+for tab, desc in tab_descriptions:
+    row += 1
+    ws[f'A{row}'] = tab
+    ws[f'A{row}'].font = Font(bold=True)
+    ws[f'B{row}'] = desc
+    ws.merge_cells(f'B{row}:D{row}')
+    for col in ['A', 'B']:
+        ws[f'{col}{row}'].border = THIN_BORDER
+
+row += 2
+ws[f'A{row}'] = "WHAT THE DISPOSITIONS MEAN"
+ws[f'A{row}'].font = SECTION_FONT
+ws[f'A{row}'].fill = SECTION_FILL
+ws.merge_cells(f'A{row}:D{row}')
+
+disposition_explanations = [
+    ("HOLD", "Keep stocking as-is. Part is profitable and turning."),
+    ("EXPEDITE", "Order more now. Stock is low relative to demand."),
+    ("REVIEW", "Borderline - investigate. Might need pricing adjustment or demand is unclear."),
+    ("STOP_REORDER", "Don't reorder when it runs out. Let existing stock sell through."),
+    ("LIQUIDATE", "Mark down and sell. Too slow to justify holding at current price."),
+    ("RELOCATE", "Consider transferring to another warehouse where it's selling."),
+    ("SCRAP", "Write off. No demand anywhere in the network."),
+]
+
+row += 1
+ws[f'A{row}'] = "Disposition"
+ws[f'B{row}'] = "What It Means"
+for col in ['A', 'B']:
+    ws[f'{col}{row}'].fill = HEADER_FILL
+    ws[f'{col}{row}'].font = HEADER_FONT
+    ws[f'{col}{row}'].border = THIN_BORDER
+
+for disp, meaning in disposition_explanations:
+    row += 1
+    ws[f'A{row}'] = disp
+    ws[f'A{row}'].font = Font(bold=True)
+    ws[f'B{row}'] = meaning
+    ws.merge_cells(f'B{row}:D{row}')
+    for col in ['A', 'B']:
+        ws[f'{col}{row}'].border = THIN_BORDER
+
+row += 2
+ws[f'A{row}'] = "DATA QUALITY NOTE"
+ws[f'A{row}'].font = SECTION_FONT
+ws[f'A{row}'].fill = PatternFill(start_color="FFC000", end_color="FFC000", fill_type="solid")
+ws.merge_cells(f'A{row}:D{row}')
+
+row += 1
+ws[f'A{row}'] = "⚠ Some items show $0 unit cost in FathoMaker. These are flagged as 'COST TBD' in the Action Items tab."
+ws.merge_cells(f'A{row}:D{row}')
+row += 1
+ws[f'A{row}'] = "Before scrapping, verify cost basis in QuickBooks to calculate accurate write-down amounts."
+ws.merge_cells(f'A{row}:D{row}')
+
+set_column_width(ws, 'A', 20)
+set_column_width(ws, 'B', 80)
+set_column_width(ws, 'C', 15)
+set_column_width(ws, 'D', 15)
+
+# ============================================================================
+# SHEET 2: ACTION ITEMS (Sorted by Priority)
+# ============================================================================
+
+ws = wb.create_sheet("Action Items")
+
+ws['A1'] = "Action Items - Parts Requiring Decisions"
+ws['A1'].font = Font(bold=True, size=14, color="1F4E79")
+ws.merge_cells('A1:F1')
+
+ws['A2'] = "Sorted by action priority. SCRAP and RELOCATE items need immediate attention."
+ws['A2'].font = Font(italic=True, size=10, color="666666")
+ws.merge_cells('A2:F2')
+
+# Build action items from merged data - only items needing action
+action_items = merged[merged['disposition'].isin(['SCRAP', 'RELOCATE', 'LIQUIDATE', 'STOP_REORDER', 'EXPEDITE'])].copy()
+
+# Priority order
+priority_map = {'SCRAP': 1, 'RELOCATE': 2, 'LIQUIDATE': 3, 'EXPEDITE': 4, 'STOP_REORDER': 5}
+action_items['priority'] = action_items['disposition'].map(priority_map)
+action_items = action_items.sort_values(['priority', 'on_hand_value'], ascending=[True, False])
+
+# Add cost flag
+action_items['cost_flag'] = action_items['unit_cost_landed'].apply(lambda x: 'COST TBD' if x == 0 else '')
+
+# Add suggested action text
+def get_action_text(row):
+    disp = row['disposition']
+    if disp == 'SCRAP':
+        return 'Write off - zero demand network-wide'
+    elif disp == 'RELOCATE':
+        if row['network_l12m_units'] > 0:
+            return f'Evaluate transfer - {int(row["network_l12m_units"])} units sold elsewhere'
+        return 'Evaluate transfer options'
+    elif disp == 'LIQUIDATE':
+        return f'Markdown to move - {row["turns"]:.1f}x turns, EVS {row["evs"]*100:.0f}%'
+    elif disp == 'EXPEDITE':
+        return f'Reorder - below target ({int(row["on_hand_qty"])}/{int(row["target_stock"])})'
+    elif disp == 'STOP_REORDER':
+        return 'Let run out - do not reorder'
+    return ''
+
+action_items['suggested_action'] = action_items.apply(get_action_text, axis=1)
+
+# Select columns for output
+action_output = action_items[[
+    'disposition', 'sku', 'dc', 'on_hand_qty', 'on_hand_value',
+    'unit_cost_landed', 'cost_flag', 'l12m_units', 'network_l12m_units',
+    'evs', 'suggested_action'
+]].copy()
+
+action_output.columns = [
+    'Action', 'SKU', 'DC', 'Units', 'Value',
+    'Unit Cost', 'Cost Flag', 'DC L12M', 'Network L12M',
+    'EVS', 'Suggested Action'
+]
+
+# Write header row (row 4)
+header_row = 4
+for col_num, col_name in enumerate(action_output.columns, 1):
+    cell = ws.cell(row=header_row, column=col_num, value=col_name)
+    cell.fill = HEADER_FILL
+    cell.font = HEADER_FONT
+    cell.alignment = CENTER_ALIGN
+    cell.border = THIN_BORDER
+
+# Write data
+for row_num, row_data in enumerate(action_output.values, header_row + 1):
+    for col_num, value in enumerate(row_data, 1):
+        cell = ws.cell(row=row_num, column=col_num, value=value)
+        cell.border = THIN_BORDER
+        cell.font = NORMAL_FONT
+        # Highlight cost flag
+        if col_num == 7 and value == 'COST TBD':
+            cell.fill = PatternFill(start_color="FFC000", end_color="FFC000", fill_type="solid")
+            cell.font = Font(bold=True, size=10)
+
+# Apply number formats
+action_formats = {
+    'D': '#,##0',      # Units
+    'E': '$#,##0',     # Value
+    'F': '$#,##0.00',  # Unit Cost
+    'H': '#,##0',      # DC L12M
+    'I': '#,##0',      # Network L12M
+    'J': '0.0%',       # EVS
+}
+for col, fmt in action_formats.items():
+    apply_number_format(ws, col, fmt, start_row=header_row+1)
+
+# Column widths
+action_widths = {'A': 14, 'B': 12, 'C': 18, 'D': 8, 'E': 12, 'F': 11, 'G': 10,
+                 'H': 10, 'I': 12, 'J': 7, 'K': 45}
+for col, width in action_widths.items():
+    set_column_width(ws, col, width)
+
+ws.freeze_panes = 'A5'
+
+# Add summary at top
+ws['A3'] = f"Total action items: {len(action_output)} | SCRAP: {len(action_output[action_output['Action']=='SCRAP'])} | RELOCATE: {len(action_output[action_output['Action']=='RELOCATE'])} | LIQUIDATE: {len(action_output[action_output['Action']=='LIQUIDATE'])} | EXPEDITE: {len(action_output[action_output['Action']=='EXPEDITE'])} | STOP_REORDER: {len(action_output[action_output['Action']=='STOP_REORDER'])}"
+ws['A3'].font = Font(bold=True, size=10)
+ws.merge_cells('A3:K3')
+
+# ============================================================================
+# SHEET 3: EXECUTIVE SUMMARY
+# ============================================================================
+
+ws = wb.create_sheet("Executive Summary")
 
 # Title
 ws['A1'] = "DuraBrake Inventory Disposition Analysis"
@@ -207,7 +435,7 @@ set_column_width(ws, 'C', 15)
 set_column_width(ws, 'D', 30)
 
 # ============================================================================
-# SHEET 2: METHODOLOGY
+# SHEET 4: METHODOLOGY
 # ============================================================================
 
 ws = wb.create_sheet("Methodology")
@@ -294,7 +522,7 @@ set_column_width(ws, 'B', 45)
 set_column_width(ws, 'C', 35)
 
 # ============================================================================
-# SHEET 3: FULL DISPOSITION DETAIL
+# SHEET 5: FULL DISPOSITION DETAIL
 # ============================================================================
 
 ws = wb.create_sheet("Full Disposition")
@@ -390,7 +618,7 @@ for col, width in widths.items():
 ws.freeze_panes = 'C2'
 
 # ============================================================================
-# SHEET 4: STRANDED INVENTORY
+# SHEET 6: STRANDED INVENTORY
 # ============================================================================
 
 ws = wb.create_sheet("Stranded - Transfer Eval")
@@ -468,7 +696,7 @@ for col, width in stranded_widths.items():
 ws.freeze_panes = 'B2'
 
 # ============================================================================
-# SHEET 5: DEAD STOCK
+# SHEET 7: DEAD STOCK
 # ============================================================================
 
 ws = wb.create_sheet("Dead Stock - Scrap")
@@ -476,19 +704,27 @@ ws = wb.create_sheet("Dead Stock - Scrap")
 dead_detail = dead.copy()
 dead_detail['Write Down (90%)'] = dead_detail['on_hand_value'] * 0.90
 dead_detail['Recovery (10%)'] = dead_detail['on_hand_value'] * 0.10
+
+# Flag items with zero cost
+dead_detail['Cost Flag'] = dead_detail['unit_cost_landed'].apply(
+    lambda x: 'COST TBD - Verify in QBO' if x == 0 else ''
+)
 dead_detail['Rationale'] = 'Zero L12M network sales, zero backlog'
 
 dead_output = dead_detail[[
-    'sku', 'dc', 'on_hand_qty', 'unit_cost_landed', 'on_hand_value',
+    'sku', 'dc', 'on_hand_qty', 'unit_cost_landed', 'Cost Flag', 'on_hand_value',
     'Write Down (90%)', 'Recovery (10%)', 'Rationale'
 ]].copy()
 
 dead_output.columns = [
-    'SKU', 'DC', 'Units', 'Unit Cost', 'Value',
+    'SKU', 'DC', 'Units', 'Unit Cost', 'Cost Flag', 'Value',
     'Write Down', 'Recovery', 'Rationale'
 ]
 
-dead_output = dead_output.sort_values('Value', ascending=False)
+# Sort: items with cost first (actionable), then zero-cost items
+dead_output['has_cost'] = dead_output['Unit Cost'] > 0
+dead_output = dead_output.sort_values(['has_cost', 'Value'], ascending=[False, False])
+dead_output = dead_output.drop('has_cost', axis=1)
 
 # Write header
 for col_num, col_name in enumerate(dead_output.columns, 1):
@@ -504,22 +740,30 @@ for row_num, row_data in enumerate(dead_output.values, 2):
         cell = ws.cell(row=row_num, column=col_num, value=value)
         cell.border = THIN_BORDER
         cell.font = NORMAL_FONT
+        # Highlight cost flag column
+        if col_num == 5 and value and 'TBD' in str(value):
+            cell.fill = PatternFill(start_color="FFC000", end_color="FFC000", fill_type="solid")
+            cell.font = Font(bold=True, size=10)
 
-# Number formats
+# Number formats (columns shifted due to Cost Flag)
 dead_formats = {
     'C': '#,##0',      # Units
     'D': '$#,##0.00',  # Unit Cost
-    'E': '$#,##0',     # Value
-    'F': '$#,##0',     # Write Down
-    'G': '$#,##0',     # Recovery
+    'F': '$#,##0',     # Value
+    'G': '$#,##0',     # Write Down
+    'H': '$#,##0',     # Recovery
 }
 for col, fmt in dead_formats.items():
     apply_number_format(ws, col, fmt)
 
-# Column widths
-dead_widths = {'A': 12, 'B': 18, 'C': 8, 'D': 11, 'E': 12, 'F': 12, 'G': 10, 'H': 35}
+# Column widths (updated for new column)
+dead_widths = {'A': 12, 'B': 18, 'C': 8, 'D': 11, 'E': 22, 'F': 12, 'G': 12, 'H': 10, 'I': 35}
 for col, width in dead_widths.items():
     set_column_width(ws, col, width)
+
+# Count items needing cost verification
+zero_cost_count = len(dead_output[dead_output['Cost Flag'].str.contains('TBD', na=False)])
+has_cost_count = len(dead_output) - zero_cost_count
 
 # Add totals row
 total_row = len(dead_output) + 2
@@ -527,21 +771,27 @@ ws[f'A{total_row}'] = 'TOTAL'
 ws[f'A{total_row}'].font = Font(bold=True)
 ws[f'C{total_row}'] = dead_output['Units'].sum()
 ws[f'C{total_row}'].number_format = '#,##0'
-ws[f'E{total_row}'] = dead_output['Value'].sum()
-ws[f'E{total_row}'].number_format = '$#,##0'
-ws[f'F{total_row}'] = dead_output['Write Down'].sum()
+ws[f'F{total_row}'] = dead_output['Value'].sum()
 ws[f'F{total_row}'].number_format = '$#,##0'
-ws[f'G{total_row}'] = dead_output['Recovery'].sum()
+ws[f'G{total_row}'] = dead_output['Write Down'].sum()
 ws[f'G{total_row}'].number_format = '$#,##0'
+ws[f'H{total_row}'] = dead_output['Recovery'].sum()
+ws[f'H{total_row}'].number_format = '$#,##0'
 
-for col in ['A', 'C', 'E', 'F', 'G']:
+for col in ['A', 'C', 'F', 'G', 'H']:
     ws[f'{col}{total_row}'].font = Font(bold=True)
     ws[f'{col}{total_row}'].fill = SECTION_FILL
+
+# Add note about cost verification
+note_row = total_row + 2
+ws[f'A{note_row}'] = f"⚠ {zero_cost_count} items have $0 cost in source data - verify in QuickBooks before finalizing write-down"
+ws[f'A{note_row}'].font = Font(bold=True, color="C00000")
+ws.merge_cells(f'A{note_row}:I{note_row}')
 
 ws.freeze_panes = 'B2'
 
 # ============================================================================
-# SHEET 6: DISPOSITION PIVOT
+# SHEET 8: DISPOSITION PIVOT
 # ============================================================================
 
 ws = wb.create_sheet("Disposition Summary")
@@ -612,17 +862,20 @@ wb.save(output_path)
 print(f"\nFormatted workbook saved to: {output_path}")
 print(f"""
 Sheets included:
-  1. Executive Summary - Key metrics with section headers
-  2. Methodology - Decision logic and formulas
-  3. Full Disposition - {len(disposition_detail)} rows, frozen panes at C2
-  4. Stranded - Transfer Eval - {len(stranded_output)} items, frozen at B2
-  5. Dead Stock - Scrap - {len(dead_output)} items with totals row
-  6. Disposition Summary - Pivot with totals
+  1. How to Use - Plain English guide to the workbook
+  2. Action Items - {len(action_output)} items needing decisions, sorted by priority
+  3. Executive Summary - Key metrics with section headers
+  4. Methodology - Decision logic and formulas
+  5. Full Disposition - {len(disposition_detail)} rows, frozen panes at C2
+  6. Stranded - Transfer Eval - {len(stranded_output)} items, frozen at B2
+  7. Dead Stock - Scrap - {len(dead_output)} items ({zero_cost_count} with cost TBD)
+  8. Disposition Summary - Pivot with totals
 
-Formatting applied:
+Features:
+  • Plain English explainer for non-technical users
+  • Action Items tab sorted by priority (SCRAP → RELOCATE → LIQUIDATE → etc.)
+  • Zero-cost items flagged as "COST TBD - Verify in QBO"
   • Header rows: Dark blue fill, white bold text
   • Number formats: Comma separators, $ for currency, % for rates
-  • Column widths: Auto-sized for readability
   • Frozen panes: Headers + key columns stay visible
-  • Borders: Consistent thin borders on data cells
 """)
