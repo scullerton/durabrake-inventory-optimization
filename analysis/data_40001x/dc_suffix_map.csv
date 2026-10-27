@@ -1,0 +1,9 @@
+suffix,gl_account,location,log_destination,stream
+102,411102,Tacoma Warehouse,"Tacoma, WA",warehouse
+104,411104,Houston Warehouse,"Pasadena, TX",warehouse
+105,411105,New Jersey Warehouse,"Linden, NJ",warehouse
+106,411106,Sacramento Warehouse,"Sacramento, CA",warehouse
+111,411111,Container Customers,,container
+112,411112,3rd Party Supplier,,other
+113,411113,Vancouver Warehouse,"Vancouver, BC",warehouse
+115,411115,Canadian Container Customer,,container
